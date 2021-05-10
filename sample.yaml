@@ -1,0 +1,83 @@
+
+- PATH: /home/jp/Documents/obs-docker/bin
+
+- line: 1
+  column: 1
+  label: Auto Focus
+  shell: autofocus
+- line: 1
+  column: 2
+  label: Fixed Focus
+  shell: fixedfocus
+
+- line: 2
+  column: 1
+  label: Lights Off
+  cd: /home/jp/Documents/elgatoctl
+  shell: elgatoctl --load off.yaml
+- line: 2
+  column: 2
+  label: Lights Low
+  cd: /home/jp/Documents/elgatoctl
+  shell: elgatoctl --load low.yaml
+- line: 2
+  column: 3
+  label: Lights Cine
+  cd: /home/jp/Documents/elgatoctl
+  shell: elgatoctl --load cinema.yaml
+- line: 2
+  column: 4
+  label: Lights Day
+  cd: /home/jp/Documents/elgatoctl
+  shell: elgatoctl --load daylight.yaml
+
+- line: 4
+  column: 1
+  label: Blank
+  eval: obs.call("SetCurrentScene", "0-Blank")
+- line: 4
+  column: 2
+  label: Loop
+  eval: obs.call("SetCurrentScene", "1-Loop")
+- line: 4
+  column: 3
+  label: Preroll
+  eval: obs.call("SetCurrentScene", "2-Preroll")
+- line: 4
+  column: 5
+  label: Slides
+  eval: obs.call("SetCurrentScene", "3-Title+cam")
+- line: 4
+  column: 6
+  label: FS+Head
+  eval: obs.call("SetCurrentScene", "6-Fullscreen+head")
+- line: 4
+  column: 7
+  label: Fullscreen
+  eval: obs.call("SetCurrentScene", "5-Fullscreen")
+- line: 4
+  column: 8
+  label: Break
+  eval: obs.call("SetCurrentScene", "8-Break")
+
+- line: 1
+  column: 8
+  label: 5 min
+  eval: countdown.countdowns["break"].init_s(300)
+- line: 2
+  column: 8
+  label: +5 min
+  eval: countdown.countdowns["break"].inc(300)
+- line: 3
+  column: 8
+  label: -1 min
+  eval: countdown.countdowns["break"].dec(60)
+
+- line: 3
+  column: 1
+  label: Aeropex
+  shell: aeropex
+- line: 3
+  column: 2
+  label: Screen Off
+  shell: xscreensaver-command -activate

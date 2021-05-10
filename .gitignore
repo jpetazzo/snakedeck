@@ -1,0 +1,4 @@
+__pycache__
+CL*.yaml
+plugins/*.ts
+plugins/*.txt
