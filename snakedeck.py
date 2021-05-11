@@ -17,7 +17,19 @@ from plugins import obs
 
 
 logging.basicConfig(level=logging.DEBUG)
-logging.debug("sdaf")
+
+# Set a couple of directory paths for later use.
+# This follows the spec at the following address:
+# https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
+if not xdg_config_home:
+  xdg_config_home = os.path.join(os.environ.get("HOME"), ".config")
+config_dir = os.path.join(xdg_config_home, "snakedeck")
+
+xdg_state_home = os.environ.get("XDG_STATE_HOME")
+if not xdg_state_home:
+  xdg_state_home = os.path.join(os.environ.get("HOME"), ".local", "state")
+state_dir = os.path.join(xdg_state_home, "snakedec")
 
 # Associates deck id to deck
 decks = {}
@@ -51,17 +63,16 @@ class Deck(object):
   def __init__(self, deck):
     self.deck = deck
     self.keys = {}
+    self.config_timestamp = None
     logging.debug(f"Opening deck {deck.id()}.")
     self.deck.open()
     self.serial_number = self.deck.get_serial_number()
     logging.debug(f"Deck {deck.id()} is a {self.deck.DECK_TYPE}, serial number {self.serial_number}.")
-    # Clear all keys
-    self.deck.reset()
-    for key in range(self.deck.KEY_COUNT):
-      self.deck.set_key_image(key, self.deck.BLANK_KEY_IMAGE)
-    self.deck.set_brightness(80)
+    self.clear()
     self.image_size = self.deck.key_image_format()['size']
+    self.config_file_path = os.path.join(config_dir, self.serial_number+".yaml")
     self.load_config()
+    threading.Thread(target=self.watch_config).start()
     self.deck.set_key_callback(self.callback)
 
   def callback(self, deck, key, state):
@@ -82,12 +93,20 @@ class Deck(object):
     except Exception as e:
       logging.exception(f"Deck {self.serial_number} key {key} caused exception {e}:")
 
+  def clear(self):
+    # Clear all keys
+    self.deck.reset()
+    for key in range(self.deck.KEY_COUNT):
+      self.deck.set_key_image(key, self.deck.BLANK_KEY_IMAGE)
+    self.deck.set_brightness(80)
+    self.keys.clear()
+
   def load_config(self):
-    file_path = f"{self.serial_number}.yaml"
-    if not os.path.isfile(file_path):
-      logging.warning(f"Deck {self.serial_number} has no configuration file ({file_path}).")
+    if not os.path.isfile(self.config_file_path):
+      logging.warning(f"Deck {self.serial_number} has no configuration file ({self.config_file_path}).")
       return
-    config = yaml.safe_load(open(file_path))
+    self.config_timestamp = os.stat(self.config_file_path).st_mtime
+    config = yaml.safe_load(open(self.config_file_path))
 
     for key in config:
       if "line" in key and "column" in key:
@@ -107,6 +126,14 @@ class Deck(object):
         if "PATH" in key:
           os.environ["PATH"] = key["PATH"] + ":" + os.environ["PATH"]
 
+  def watch_config(self):
+    while True:
+      if os.path.isfile(self.config_file_path):
+        if os.stat(self.config_file_path).st_mtime > self.config_timestamp:
+          logging.info("Configuration file for deck {self.serial_number} changed, reloading it.")
+          self.clear()
+          self.load_config()
+
 
 threading.Thread(target=deck_detector).start()
 
@@ -117,6 +144,6 @@ for t in threading.enumerate():
 
   if t.is_alive():
     try:
-    	t.join()
+      t.join()
     except KeyboardInterrupt:
       os._exit(0)
