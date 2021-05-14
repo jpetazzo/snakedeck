@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import glob
-import logging
 import os
 import sys
 import threading
@@ -59,12 +58,6 @@ class Countdown(object):
             f.write(self.fmt())
 
 
-    def loop(self):
-        while True:
-            self.update()
-            time.sleep(1)
-
-
     def inc(self, seconds):
         seconds = int(seconds)
         self.timestamp += seconds
@@ -75,26 +68,43 @@ class Countdown(object):
         self.save()
 
 
-if __name__ == "__main__":
-    if sys.argv[1] == "_":
+class CountdownManager(object):
+
+    def __init__(self, directory="."):
+        self.directory = directory
+        if not os.path.isdir(directory):
+            os.makedirs(directory)
+        self.countdowns = {}
+
+    def once(self):
+        names = [ filename[:-3] for filename in glob.glob(os.path.join(self.directory, "*.ts")) ]
+        for name in names:
+            if name not in self.countdowns:
+                self.countdowns[name] = Countdown(name, self.directory)
+            self.countdowns[name].update()
+
+    def loop(self):
         while True:
-            for tsfile in glob.glob("*.ts"):
-                basename = tsfile[:-3]
-                countdown = Countdown(basename)
-                countdown.update()
+            self.once()
             time.sleep(1)
 
+    def __getitem__(self, name):
+        if name not in self.countdowns:
+            self.countdowns[name] = Countdown(name, self.directory)
+        return self.countdowns[name]
 
-    countdown = Countdown(sys.argv[1])        
-    method = getattr(countdown, sys.argv[2])
-    print(method(*sys.argv[3:]))
-else:
-    # Used as a module, start the update loop in a thread
-    countdowns = {}
-    plugin_dir = os.path.dirname(__file__)
-    for tsfile in glob.glob(os.path.join(plugin_dir, "*.ts")):
-        logging.debug(f"Found countdown file {tsfile}.")
-        basename = os.path.basename(tsfile)[:-3]
-        countdown = Countdown(basename, plugin_dir)
-        countdowns[basename] = countdown
-        threading.Thread(target=countdown.loop).start()
+
+if __name__ == "__main__":
+    if sys.argv[1] == "_":
+        CountdownManager().loop()
+    else:
+        countdown = Countdown(sys.argv[2])        
+        method = getattr(countdown, sys.argv[1])
+        print(method(*sys.argv[3:]))
+
+
+def snakedeck_plugin(directory):
+    countdownManager = CountdownManager(directory)
+    threading.Thread(target=countdownManager.loop).start()
+    return countdownManager
+

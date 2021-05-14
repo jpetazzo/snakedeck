@@ -12,11 +12,9 @@ from PIL import Image, ImageFont, ImageDraw
 from StreamDeck.DeviceManager import DeviceManager
 from StreamDeck.ImageHelpers import PILHelper
 
-from plugins import countdown
-from plugins import obs
-
 
 logging.basicConfig(level=logging.DEBUG)
+
 
 # Set a couple of directory paths for later use.
 # This follows the spec at the following address:
@@ -29,7 +27,15 @@ config_dir = os.path.join(xdg_config_home, "snakedeck")
 xdg_state_home = os.environ.get("XDG_STATE_HOME")
 if not xdg_state_home:
   xdg_state_home = os.path.join(os.environ.get("HOME"), ".local", "state")
-state_dir = os.path.join(xdg_state_home, "snakedec")
+state_dir = os.path.join(xdg_state_home, "snakedeck")
+
+
+import plugins.countdowns
+countdowns = plugins.countdowns.snakedeck_plugin(state_dir)
+
+import plugins.obs
+obs = plugins.obs.snakedeck_plugin()
+
 
 # Associates deck id to deck
 decks = {}
@@ -128,6 +134,7 @@ class Deck(object):
 
   def watch_config(self):
     while True:
+      time.sleep(1)
       if os.path.isfile(self.config_file_path):
         if os.stat(self.config_file_path).st_mtime > self.config_timestamp:
           logging.info("Configuration file for deck {self.serial_number} changed, reloading it.")

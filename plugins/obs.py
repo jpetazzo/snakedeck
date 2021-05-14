@@ -37,3 +37,7 @@ def call(func, *args, **kwargs):
     except:
       ws = None
       raise
+
+
+def snakedeck_plugin():
+  return call
