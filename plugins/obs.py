@@ -38,6 +38,11 @@ def call(func, *args, **kwargs):
       ws = None
       raise
 
+def noretcall(func, *args, **kwargs):
+  call(func, *args, **kwargs)
 
 def snakedeck_plugin():
-  return call
+  # Snakedeck uses the return value to update the key.
+  # We don't want to update OBS shortcut keys when they are pressed.
+  # So we force an empty return value.
+  return noretcall
