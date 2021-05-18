@@ -8,9 +8,8 @@ import time
 
 
 class Countdown(object):
-    
     def __init__(self, name, directory="."):
-        
+
         self.name = name
         self.tsfile = os.path.join(directory, name + ".ts")
         self.txtfile = os.path.join(directory, name + ".txt")
@@ -19,7 +18,6 @@ class Countdown(object):
         except Exception as e:
             print("Couldn't read timestamp ({}), setting to now".format(e))
             self.timestamp = time.time()
-    
 
     def init_hm(self, hour, minute):
         t = list(time.localtime())
@@ -29,39 +27,36 @@ class Countdown(object):
         t = tuple(t)
         self.timestamp = time.mktime(t)
         if self.timestamp < time.time():
-            self.timestamp += 3600*24
+            self.timestamp += 3600 * 24
         self.save()
-
 
     def init_s(self, seconds):
         seconds = int(seconds)
         self.timestamp = time.time() + seconds
         self.save()
 
-
     def save(self):
         with open(self.tsfile, "w") as f:
             f.write(str(self.timestamp))
         self.update()
-
 
     def fmt(self):
         delta = int(self.timestamp - time.time())
         if delta <= 0:
             return "--:--:--"
         return "{:02d}:{:02d}:{:02d}".format(
-                delta//3600, delta//60 % 60, delta % 60)
-
+            delta // 3600, delta // 60 % 60, delta % 60
+        )
 
     def update(self):
         with open(self.txtfile, "w") as f:
             f.write(self.fmt())
 
-
     def inc(self, seconds):
         seconds = int(seconds)
         self.timestamp += seconds
         self.save()
+
     def dec(self, seconds):
         seconds = int(seconds)
         self.timestamp -= seconds
@@ -69,7 +64,6 @@ class Countdown(object):
 
 
 class CountdownManager(object):
-
     def __init__(self, directory="."):
         self.directory = directory
         if not os.path.isdir(directory):
@@ -77,9 +71,13 @@ class CountdownManager(object):
         self.countdowns = {}
 
     def once(self):
-        names = [ filename[:-3] for filename in glob.glob(os.path.join(self.directory, "*.ts")) ]
+        names = [
+            os.path.basename(filename[:-3])
+            for filename in glob.glob(os.path.join(self.directory, "*.ts"))
+        ]
         for name in names:
             if name not in self.countdowns:
+                print(f"Found new countdown '{name}'.")
                 self.countdowns[name] = Countdown(name, self.directory)
             self.countdowns[name].update()
 
@@ -98,7 +96,7 @@ if __name__ == "__main__":
     if sys.argv[1] == "_":
         CountdownManager().loop()
     else:
-        countdown = Countdown(sys.argv[2])        
+        countdown = Countdown(sys.argv[2])
         method = getattr(countdown, sys.argv[1])
         print(method(*sys.argv[3:]))
 
@@ -107,4 +105,3 @@ def snakedeck_plugin(directory):
     countdownManager = CountdownManager(directory)
     threading.Thread(target=countdownManager.loop).start()
     return countdownManager
-
