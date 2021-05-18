@@ -1,0 +1,51 @@
+- line: 1
+  column: 1
+  label: Hello,
+- line: 1
+  column: 2
+  label: world!
+- line: 1
+  column: 3
+  label: This
+- line: 1
+  column: 4
+  label: is
+- line: 1
+  column: 5
+  label: snakedeck
+
+- line: 2
+  column: 1
+  label: "Mood:"
+- line: 2
+  column: 2
+  sync: mood
+  cycle:
+  - emoji: 🙂
+  - emoji: 🤣
+  - emoji: 😭
+  - emoji: 🤬
+
+- line: 2
+  column: 3
+  label: "Needs:"
+- line: 2
+  column: 4
+  sync: needs
+  cycle:
+  - emoji: 👍🏻
+  - emoji: 🍝
+  - emoji: 🍺
+  - emoji: 💕
+
+- line: 2
+  column: 5
+  cycle:
+  - emoji: 🔇
+    shell: pactl set-sink-mute @DEFAULT_SINK@ off
+  - emoji: 🔊
+    shell: pactl set-sink-mute @DEFAULT_SINK@ on
+
+- line: 3
+  column: 5
+  clock: "%H:%M:%S"

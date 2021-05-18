@@ -44,7 +44,7 @@ obs = plugins.obs.snakedeck_plugin()
 decks = {}
 
 
-# Global font for now
+# FIXME: detect if these fonts are missing?
 label_font = ImageFont.truetype("DroidSans", 20)
 emoji_font = ImageFont.truetype("NotoColorEmoji", 109, layout_engine=ImageFont.LAYOUT_RAQM)
 
@@ -151,7 +151,8 @@ class Deck(object):
       if state and "eval" in key:
         retval = eval(key["eval"])
         if retval is not None:
-          self.update_key(key, retval)
+          key.update(retval)
+          self.update_key(key_number, key)
       if state and "cycle" in key:
         key["cycle"].append(key["cycle"].pop(0))
         key["actor"] = self.serial_number
