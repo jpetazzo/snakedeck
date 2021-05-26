@@ -39,6 +39,9 @@ countdowns = plugins.countdowns.snakedeck_plugin(state_dir)
 import plugins.obs
 obs = plugins.obs.snakedeck_plugin()
 
+import plugins.lights
+lights = plugins.lights.snakedeck_plugin()
+
 
 # Associates deck id to deck
 decks = {}
