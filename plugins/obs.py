@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+import json
 import logging
 import websocket
 import sys
@@ -46,3 +49,45 @@ def snakedeck_plugin():
   # We don't want to update OBS shortcut keys when they are pressed.
   # So we force an empty return value.
   return noretcall
+
+if __name__ == "__main__":
+  if len(sys.argv) == 1:
+    print("""
+You can invoke this plugin from the command line to explore the OBS
+WebSocket API. You can pass a function call to invoke as a parameter,
+like this:
+
+    GetSceneList
+    SetCurrentScene <name>
+
+You can also specify '?' to show available functions, or ?Scene to show
+all functions containing Scene.
+
+If an argument contains = it will be passed as a kwarg, and the right
+hand side should be JSON.
+""")
+    exit()
+
+  if sys.argv[1].startswith('?'):
+    search = sys.argv[1][1:]
+    for func in dir(requests):
+      if func[0] == '_':
+        continue
+      if search in func:
+        print(func)
+    exit()
+
+  args = []
+  kwargs = {}
+
+  for a in sys.argv[2:]:
+    if '=' in a:
+      k, v = a.split('=', 1)
+      v = json.loads(v)
+      kwargs[k] = v
+    else:
+      args.append(a)
+
+  ret = call(sys.argv[1], *args, **kwargs)
+  print(json.dumps(ret))
+
