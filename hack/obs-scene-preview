@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import json
+import websocket
+import sys
+
+from obswebsocket import obsws, requests  # noqa: E402
+
+host = "localhost"
+port = 4444
+
+# Manual connection
+# (there seems to be an issue with password auth;
+# this might be specific to OBS 24 since it worked
+# fine on OBS 25 on Arch)
+ws = obsws(host, port)
+ws.ws = websocket.WebSocket()
+ws.ws.connect("ws://{}:{}".format(host, port))
+ws._run_threads()
+
+def call(func, *params):
+    req = ws.call(getattr(requests, func)(*params))
+    return req.datain
+
+import base64
+import io
+import PIL.Image
+import StreamDeck.DeviceManager
+import StreamDeck.ImageHelpers.PILHelper
+
+request = requests.TakeSourceScreenshot("1-Preroll", embedPictureFormat="jpeg")
+response = ws.call(request)
+img = response.datain["img"]
+b64data = img.split(",")[1]
+bindata = base64.b64decode(b64data)
+pseudofile = io.BytesIO(bindata)
+image = PIL.Image.open(pseudofile)
+
+dm = StreamDeck.DeviceManager.DeviceManager()
+deck = dm.enumerate()[0]
+deck.open()
+deck_image = StreamDeck.ImageHelpers.PILHelper.to_native_format(deck, image)
+deck.set_key_image(4, deck_image)
+
+
+
