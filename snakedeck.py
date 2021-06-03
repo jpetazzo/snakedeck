@@ -55,6 +55,7 @@ emoji_font = ImageFont.truetype("NotoColorEmoji", 109, layout_engine=ImageFont.L
 sync_address = "224.0.19.4"
 sync_port = 19004
 sync_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sync_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sync_socket.bind(("0.0.0.0", sync_port))
 sync_address_as_bytes = socket.inet_aton(sync_address)
 sync_sockopt = struct.pack('4sL', sync_address_as_bytes, socket.INADDR_ANY)
