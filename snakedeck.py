@@ -116,8 +116,11 @@ def sync_receiver():
 
 def loop_decks():
   while True:
-    detect_decks()
-    update_decks()
+    try:
+      detect_decks()
+      update_decks()
+    except:
+      logging.exception("Error in main loop.")
     time.sleep(1)
 
 
