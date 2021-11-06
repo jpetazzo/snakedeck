@@ -85,7 +85,7 @@ def update_decks():
     for key_number in deck.keys:
       key = deck.keys[key_number]
       if "clock" in key:
-        label = time.strftime("%H:%M:%S")
+        label = time.strftime(key["clock"])
         key["label"] = label
         deck.update_key(key_number, key)
       if "sync" in key:
@@ -205,7 +205,9 @@ class Deck(object):
       font = emoji_font
       kwargs = dict(embedded_color=True, fill="white")
     if text:
-      text_size = font.getsize(text)
+      text_size = font.getsize_multiline(text)
+      # Try to work around https://github.com/python-pillow/Pillow/issues/5816
+      text_size = (text_size[0], text_size[1]+font.getmetrics()[1])
       image = Image.new("RGB", text_size)
       draw = ImageDraw.Draw(image)
       draw.text((0, 0), text, font=font, **kwargs)
