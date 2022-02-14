@@ -27,7 +27,7 @@ update key status remotely.
 
 ## Getting started
 
-Clone that repo, `pip install --user requirements.txt`; and you
+Clone that repo, `pip install --user -r requirements.txt`; and you
 might have to do some setup specific to the Stream Deck library
 (FIXME add link to that).
 
