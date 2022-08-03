@@ -1,33 +1,19 @@
 #!/usr/bin/env python
 
 import json
-import logging
-import websocket
 import sys
 
-from obswebsocket import obsws, requests  # noqa: E402
-from obswebsocket.exceptions import ConnectionFailure
+import obsstudio_sdk.reqs
 
 host = "localhost"
-port = 4444
+port = 4455
+password = "sesame"
+ws = None
+
 
 def obs_connect():
-  # Manual connection
-  # (there seems to be an issue with password auth;
-  # this might be specific to OBS 24 since it worked
-  # fine on OBS 25 on Arch)
-  try:
-    ws = obsws(host, port)
-    ws.ws = websocket.WebSocket()
-    ws.ws.connect("ws://{}:{}".format(host, port))
-    ws._run_threads()
-    return ws
-  except ConnectionRefusedError:
-    logging.warning("Could not connect to OBS. Is it running and accepting WebSocket connections?")
-  except:
-    logging.exception("Could not connect to OBS.")
+  return obsstudio_sdk.reqs.ReqClient(host=host, port=port, password=password)
 
-ws = obs_connect()
 
 def call(func, *args, **kwargs):
   global ws
@@ -35,20 +21,23 @@ def call(func, *args, **kwargs):
     ws = obs_connect()
   if ws is not None:
     try:
-      req = ws.call(getattr(requests, func)(*args, **kwargs))
-      return req.datain
+      response = getattr(ws, func)(*args, **kwargs)
+      return response["d"]
     except:
       ws = None
       raise
 
+
 def noretcall(func, *args, **kwargs):
   call(func, *args, **kwargs)
 
+
+# Snakedeck uses the return value to update the key.
+# We don't want to update OBS shortcut keys when they are pressed.
+# So we force an empty return value.
 def snakedeck_plugin():
-  # Snakedeck uses the return value to update the key.
-  # We don't want to update OBS shortcut keys when they are pressed.
-  # So we force an empty return value.
   return noretcall
+
 
 if __name__ == "__main__":
   if len(sys.argv) == 1:
@@ -70,7 +59,7 @@ hand side should be JSON.
 
   if sys.argv[1].startswith('?'):
     search = sys.argv[1][1:]
-    for func in dir(requests):
+    for func in dir(obsstudio_sdk.reqs.ReqClient):
       if func[0] == '_':
         continue
       if search in func:
@@ -90,4 +79,3 @@ hand side should be JSON.
 
   ret = call(sys.argv[1], *args, **kwargs)
   print(json.dumps(ret))
-

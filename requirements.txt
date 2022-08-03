@@ -1,5 +1,5 @@
 leglight
-obs-websocket-py
-pillow >= 8
+obsstudio-sdk
+pillow >= 9
 streamdeck >= 0.8
 

@@ -6,7 +6,6 @@ import os
 import socket
 import struct
 import subprocess
-import sys
 import time
 import threading
 import yaml
@@ -49,7 +48,7 @@ decks = {}
 
 # FIXME: detect if these fonts are missing?
 label_font = ImageFont.truetype("DroidSans", 20)
-emoji_font = ImageFont.truetype("NotoColorEmoji", 109, layout_engine=ImageFont.LAYOUT_RAQM)
+emoji_font = ImageFont.truetype("NotoColorEmoji", 109, layout_engine=ImageFont.Layout.RAQM)
 
 
 sync_address = "224.0.19.4"
@@ -63,6 +62,7 @@ sync_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, sync_sockopt
 
 
 deviceManager = DeviceManager()
+
 
 def detect_decks():
   # First, let's check if any deck was disconnected.
@@ -93,7 +93,6 @@ def update_decks():
         if actor == deck.serial_number:
           data_as_bytes = bytes(json.dumps(key), "utf-8")
           sync_socket.sendto(data_as_bytes, (sync_address, sync_port))
-
 
 
 def sync_receiver():
@@ -137,7 +136,7 @@ class Deck(object):
     self.clear()
     self.image_size = self.deck.key_image_format()['size']
     logging.debug(f"Deck {self.serial_number} image size is {self.image_size}.")
-    self.config_file_path = os.path.join(config_dir, self.serial_number+".yaml")
+    self.config_file_path = os.path.join(config_dir, self.serial_number + ".yaml")
     self.load_config()
     threading.Thread(target=self.watch_config).start()
     self.deck.set_key_callback(self.callback)
@@ -147,6 +146,7 @@ class Deck(object):
     logging.debug(f"Deck {self.serial_number} key {key_number} is now {pressed_or_released}.")
     try:
       key = self.keys[key_number]
+      logging.debug(f"key={key}")
       if state and "shell" in key:
         command = key["shell"]
         kwargs = {"shell": True}
@@ -205,9 +205,9 @@ class Deck(object):
       font = emoji_font
       kwargs = dict(embedded_color=True, fill="white")
     if text:
-      text_size = font.getsize_multiline(text)
-      # Try to work around https://github.com/python-pillow/Pillow/issues/5816
-      text_size = (text_size[0], text_size[1]+font.getmetrics()[1])
+      null_image = Image.new("RGB", (0, 0))
+      null_draw = ImageDraw.Draw(null_image)
+      text_size = null_draw.multiline_textbbox((0, 0), text, font)[2:4]
       image = Image.new("RGB", text_size)
       draw = ImageDraw.Draw(image)
       draw.text((0, 0), text, font=font, **kwargs)
