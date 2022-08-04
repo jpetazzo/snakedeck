@@ -84,9 +84,12 @@ def update_decks():
   for deck in decks.values():
     for key_number in deck.keys:
       key = deck.keys[key_number]
-      if "clock" in key:
-        label = time.strftime(key["clock"])
-        key["label"] = label
+      if "timer" in key:
+        timer = key["timer"]
+        if "label" in timer:
+          key["label"] = eval(timer["label"])
+        if "emoji" in timer:
+          key["emoji"] = eval(timer["emoji"])
         deck.update_key(key_number, key)
       if "sync" in key:
         actor = key.get("actor")
