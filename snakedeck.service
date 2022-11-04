@@ -1,0 +1,12 @@
+# You can install this unit with:
+# envsubst < snakedeck.service > ~/.config/systemd/user/snakedeck.service
+# systemctl --user enable snakedeck.service --now
+
+[Unit]
+Description=SnakeDeck (Elgato StreamDeck manager in Python)
+
+[Service]
+ExecStart=$PWD/snakedeck.py
+
+[Install]
+WantedBy=default.target

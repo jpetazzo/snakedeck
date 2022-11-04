@@ -3,16 +3,19 @@
 import json
 import logging
 import os
+import requests
 import socket
 import struct
 import subprocess
 import time
 import threading
+import unicodedata
 import yaml
 
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 from StreamDeck.DeviceManager import DeviceManager
 from StreamDeck.ImageHelpers import PILHelper
+from StreamDeck.Transport.Transport import TransportError
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -41,14 +44,20 @@ obs = plugins.obs.snakedeck_plugin()
 import plugins.lights
 lights = plugins.lights.snakedeck_plugin()
 
+import plugins.pulse
+pulse = plugins.pulse.snakedeck_plugin()
+
+import plugins.alsa
+alsa = plugins.alsa.snakedeck_plugin()
 
 # Associates deck id to deck
 decks = {}
 
 
 # FIXME: detect if these fonts are missing?
-label_font = ImageFont.truetype("DroidSans", 20)
+text_font = ImageFont.truetype("DroidSans", 20)
 emoji_font = ImageFont.truetype("NotoColorEmoji", 109, layout_engine=ImageFont.Layout.RAQM)
+interline = 8
 
 
 sync_address = "224.0.19.4"
@@ -81,21 +90,34 @@ def detect_decks():
 
 
 def update_decks():
-  for deck in decks.values():
+  for deck_id, deck in decks.items():
     for key_number in deck.keys:
-      key = deck.keys[key_number]
-      if "timer" in key:
-        timer = key["timer"]
-        if "label" in timer:
-          key["label"] = eval(timer["label"])
-        if "emoji" in timer:
-          key["emoji"] = eval(timer["emoji"])
-        deck.update_key(key_number, key)
-      if "sync" in key:
-        actor = key.get("actor")
-        if actor == deck.serial_number:
-          data_as_bytes = bytes(json.dumps(key), "utf-8")
-          sync_socket.sendto(data_as_bytes, (sync_address, sync_port))
+      try:
+        key = deck.keys[key_number]
+        if "timer" in key:
+          timer = key["timer"]
+          interval = timer.get("interval", 1)
+          deadline = timer.get("deadline", 0)
+          if deadline > time.time():
+            continue
+          timer["deadline"] = time.time() + interval
+          if "label" in timer:
+            key["label"] = eval(timer["label"])
+          if "emoji" in timer:
+            key["emoji"] = eval(timer["emoji"])
+          try:
+            deck.update_key(key_number, key)
+          except TransportError:
+            logging.warning(f"Deck {deck_id} ({decks[deck_id].serial_number}) might have been disconnected.")
+            del decks[deck_id]
+            return
+        if "sync" in key:
+          actor = key.get("actor")
+          if actor == deck.serial_number:
+            data_as_bytes = bytes(json.dumps(key), "utf-8")
+            sync_socket.sendto(data_as_bytes, (sync_address, sync_port))
+      except:
+        logging.exception(f"Exception while updating key {key_number} on deck {deck_id}:")
 
 
 def sync_receiver():
@@ -198,22 +220,35 @@ class Deck(object):
     self.keys[key_number] = key
     if "cycle" in key:
       key.update(key["cycle"][0])
-    text = None
     if "label" in key:
-      text = key["label"]
-      font = label_font
-      kwargs = dict()
-    if "emoji" in key:
-      text = key["emoji"]
-      font = emoji_font
-      kwargs = dict(embedded_color=True, fill="white")
-    if text:
-      null_image = Image.new("RGB", (0, 0))
-      null_draw = ImageDraw.Draw(null_image)
-      text_size = null_draw.multiline_textbbox((0, 0), text, font)[2:4]
-      image = Image.new("RGB", text_size)
-      draw = ImageDraw.Draw(image)
-      draw.text((0, 0), text, font=font, **kwargs)
+      lines = key["label"].split("\n")
+      images = []
+      for line in lines:
+        if not line:
+          continue
+        # Figure out if that line is text or emoji
+        if unicodedata.category(line[0])=="So":
+          font = emoji_font
+          kwargs = dict(embedded_color=True, fill="white")
+        else:
+          font = text_font
+          kwargs = dict()
+        line_size = font.getbbox(line)[2:4]
+        image = Image.new("RGB", line_size)
+        draw = ImageDraw.Draw(image)
+        draw.text((0,0), line, font=font, **kwargs)
+        # If the resulting image is too wide, scale it down
+        if image.width > self.image_size[0]:
+          image = ImageOps.scale(image, self.image_size[0]/image.width)
+        images.append(image)
+      image_width = max(i.width for i in images)
+      image_heigth = sum(i.height for i in images) + interline*(len(images)-1)
+      image = Image.new("RGB", (image_width, image_heigth))
+      y = 0
+      for i in images:
+        x = (image_width - i.width) // 2
+        image.paste(i, (x, y))
+        y += i.height + interline
       scaled_image = PILHelper.create_scaled_image(self.deck, image, margins=[4, 4, 4, 4])
       deck_image = PILHelper.to_native_format(self.deck, scaled_image)
       self.deck.set_key_image(key_number, deck_image)

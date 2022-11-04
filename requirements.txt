@@ -1,5 +1,7 @@
 leglight
 obsstudio-sdk
 pillow >= 9
+pulsectl
+pyalsaaudio
+requests
 streamdeck >= 0.8
-
