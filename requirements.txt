@@ -1,5 +1,6 @@
 leglight
-obsstudio-sdk
+#obsstudio-sdk
+obsws-python
 pillow >= 9
 pulsectl
 pyalsaaudio

@@ -3,7 +3,7 @@
 import json
 import sys
 
-import obsstudio_sdk.reqs
+import obsws_python.reqs
 
 host = "localhost"
 port = 4455
@@ -12,7 +12,7 @@ ws = None
 
 
 def obs_connect():
-  return obsstudio_sdk.reqs.ReqClient(host=host, port=port, password=password)
+  return obsws_python.reqs.ReqClient(host=host, port=port, password=password)
 
 
 def call(func, *args, **kwargs):
@@ -22,7 +22,11 @@ def call(func, *args, **kwargs):
   if ws is not None:
     try:
       response = getattr(ws, func)(*args, **kwargs)
-      return response["d"]
+      if hasattr(response, "attrs"):
+        retval = dict([(k, getattr(response, k)) for k in response.attrs()])
+        return retval
+      else:
+        return
     except:
       ws = None
       raise
@@ -59,7 +63,7 @@ hand side should be JSON.
 
   if sys.argv[1].startswith('?'):
     search = sys.argv[1][1:]
-    for func in dir(obsstudio_sdk.reqs.ReqClient):
+    for func in dir(obsws_python.reqs.ReqClient):
       if func[0] == '_':
         continue
       if search in func:
