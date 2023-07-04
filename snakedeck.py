@@ -34,7 +34,6 @@ if not xdg_state_home:
   xdg_state_home = os.path.join(os.environ.get("HOME"), ".local", "state")
 state_dir = os.path.join(xdg_state_home, "snakedeck")
 
-
 import plugins.countdowns
 countdowns = plugins.countdowns.snakedeck_plugin(state_dir)
 
@@ -264,7 +263,7 @@ class Deck(object):
 
 
 threading.Thread(target=loop_decks).start()
-threading.Thread(target=sync_receiver).start()
+#threading.Thread(target=sync_receiver).start()
 
 
 for t in threading.enumerate():
