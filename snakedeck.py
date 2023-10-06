@@ -82,6 +82,9 @@ def detect_decks():
       del decks[deck_id]
   # OK, now let's check if new decks are detected.
   for deck in deviceManager.enumerate():
+    # Skip non-visual devices.
+    if not deck.is_visual():
+      continue
     deck_id = deck.id()
     if deck_id not in decks:
       logging.info(f"Deck {deck_id} was detected.")
