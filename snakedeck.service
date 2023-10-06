@@ -6,7 +6,7 @@
 Description=SnakeDeck (Elgato StreamDeck manager in Python)
 
 [Service]
-ExecStart=$PWD/snakedeck.py
+ExecStart=$PWD/venv/bin/python $PWD/snakedeck.py
 
 [Install]
 WantedBy=default.target

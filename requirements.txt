@@ -6,3 +6,4 @@ pulsectl
 pyalsaaudio
 requests
 streamdeck >= 0.8
+pyyaml
