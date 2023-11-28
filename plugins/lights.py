@@ -11,6 +11,14 @@ class Lights(object):
     self.lights = leglight.discover(3)
     logging.debug(f"Found {len(self.lights)} lights.")
 
+  def add(self, address):
+    for light in self.lights:
+      if address == light.address:
+        logging.info(f"Light {address} already exists; not adding it.")
+        return
+    logging.info(f"Light {address} didn't exist yet; adding it.")
+    self.lights.append(leglight.LegLight(address, 9123))
+
   def set(self, light_name, power=None, brightness=None, temperature=None):
     light_found = False
     for light in self.lights:

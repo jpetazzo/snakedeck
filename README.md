@@ -140,6 +140,20 @@ The synchronization mechanism is currently bidirectional, but might change
 in the future to allow send-only and receive-only operation.
 
 
+## Plugin initialization
+
+It is possible to run arbitrary code when the configuration is loaded,
+by adding an entry with an `eval` key, without `line`/`column` information.
+For instance, the `lights` plugin (to interface with Elgato Key Lights)
+will use Zeroconf to discover existing lights, but in some circumstances,
+lights might not be detected; and it's possible to manually add a light
+by adding the following section in the configuration:
+
+```yaml
+- eval: lights.add("10.0.0.42")
+```
+
+
 ## Future developments
 
 Feel free to open issues if you have great ideas of new features!

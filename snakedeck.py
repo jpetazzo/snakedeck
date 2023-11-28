@@ -217,6 +217,9 @@ class Deck(object):
       else:
         if "PATH" in key:
           os.environ["PATH"] = key["PATH"] + ":" + os.environ["PATH"]
+        if "eval" in key:
+          eval(key["eval"])
+
 
   def update_key(self, key_number, key):
     self.keys[key_number] = key
