@@ -17,7 +17,10 @@ class Lights(object):
         logging.info(f"Light {address} already exists; not adding it.")
         return
     logging.info(f"Light {address} didn't exist yet; adding it.")
-    self.lights.append(leglight.LegLight(address, 9123))
+    try:
+        self.lights.append(leglight.LegLight(address, 9123))
+    except:
+        logging.exception(f"Error while adding light {address}.")
 
   def set(self, light_name, power=None, brightness=None, temperature=None):
     light_found = False
